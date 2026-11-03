@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Model Y — 一台装得下生活的车</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#fff;
+    --dim:#8a8d92;
+    --line:rgba(255,255,255,.14);
+    --blue:#3e6ae1;
+    --red:#e82127;
+    --pad:clamp(24px,6vw,96px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Helvetica Neue","Tesla Sans",Inter,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body{overflow:hidden}
+  #deck{height:100dvh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none}
+  #deck::-webkit-scrollbar{display:none}
+  .slide{position:relative;height:100dvh;scroll-snap-align:start;display:flex;flex-direction:column;
+    justify-content:center;padding:var(--pad);overflow:hidden}
+
+  /* top bar */
+  .topbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 var(--pad);z-index:40;
+    transition:background .4s ease,backdrop-filter .4s ease}
+  .topbar.solid{background:rgba(0,0,0,.72);backdrop-filter:blur(14px)}
+  .logo{font-size:13px;letter-spacing:.62em;font-weight:600;opacity:.95}
+  .links{display:flex;gap:26px;font-size:13px;color:#d0d1d2}
+  .links a{color:inherit;text-decoration:none;opacity:.85;transition:opacity .3s}
+  .links a:hover{opacity:1}
+  .btn{border:0;cursor:pointer;font:inherit;font-size:13px;padding:9px 20px;border-radius:4px;
+    background:#fff;color:#111;transition:transform .25s ease,background .25s ease,box-shadow .3s}
+  .btn:hover{background:#f2f2f2;transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,255,255,.14)}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#fff;backdrop-filter:blur(8px)}
+  .btn.ghost:hover{background:rgba(255,255,255,.18)}
+  .btn.blue{background:var(--blue);color:#fff}
+  .btn.small{padding:7px 16px;font-size:12px}
+
+  /* progress + dots */
+  .progress{position:fixed;left:0;top:0;height:2px;background:var(--red);width:0;z-index:50;
+    transition:width .15s linear}
+  .dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;
+    gap:12px;z-index:40}
+  .dots button{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.45);
+    background:transparent;padding:0;cursor:pointer;transition:all .35s ease}
+  .dots button.on{background:#fff;border-color:#fff;transform:scale(1.35)}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(28px);transition:opacity 1s cubic-bezier(.22,1,.36,1),
+      transform 1s cubic-bezier(.22,1,.36,1)}
+  .in .rv{opacity:1;transform:none}
+  .in .rv.d1{transition-delay:.1s}.in .rv.d2{transition-delay:.22s}
+  .in .rv.d3{transition-delay:.34s}.in .rv.d4{transition-delay:.46s}
+  .in .rv.d5{transition-delay:.58s}
+
+  .kicker{font-size:12px;letter-spacing:.4em;color:var(--dim);text-transform:uppercase;margin:0 0 18px}
+  h1{font-size:clamp(52px,11vw,132px);line-height:.94;letter-spacing:-.03em;font-weight:500;margin:0}
+  h2{font-size:clamp(30px,5.4vw,58px);line-height:1.06;letter-spacing:-.02em;font-weight:500;margin:0 0 22px}
+  p.lead{font-size:clamp(15px,2vw,19px);line-height:1.6;color:#c9cbcf;max-width:38ch;margin:16px 0 0}
+
+  /* hero */
+  .hero{padding:0;justify-content:flex-end;align-items:center;text-align:center}
+  .bg{position:absolute;inset:0;background-size:cover;background-position:center;will-change:transform}
+  .bg::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.62) 0%,rgba(0,0,0,.15) 35%,rgba(0,0,0,.86) 100%)}
+  .hero .inner{position:relative;z-index:2;padding:0 var(--pad) clamp(56px,9vh,110px);width:100%}
+  .hero h1{font-size:clamp(46px,10vw,110px)}
+  .hero .sub{margin:14px 0 0;font-size:clamp(13px,2vw,16px);color:#d4d6d9;letter-spacing:.12em}
+  .cta{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .scrollcue{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:3;
+    font-size:10px;letter-spacing:.35em;color:rgba(255,255,255,.6)}
+  .scrollcue span{display:block;width:1px;height:34px;margin:10px auto 0;
+    background:linear-gradient(#fff,transparent);animation:cue 1.9s infinite}
+  @keyframes cue{0%{opacity:0;transform:translateY(-8px)}50%{opacity:1}100%{opacity:0;transform:translateY(10px)}}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,3vw,40px);margin-top:clamp(28px,5vh,54px)}
+  .stat{border-top:1px solid var(--line);padding-top:18px}
+  .stat b{display:block;font-size:clamp(38px,6vw,74px);font-weight:400;letter-spacing:-.03em;line-height:1}
+  .stat span{display:block;margin-top:10px;font-size:12px;color:var(--dim);letter-spacing:.16em}
+
+  /* image panel */
+  .panel{position:relative;border-radius:6px;overflow:hidden;background:#0d0e11}
+  .panel img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.2s cubic-bezier(.22,1,.36,1)}
+  .panel:hover img{transform:scale(1.04)}
+  .hotspot{position:absolute;width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.85);
+    background:rgba(0,0,0,.25);cursor:pointer;transform:translate(-50%,-50%)}
+  .hotspot::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+    animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{transform:scale(.8);opacity:.9}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+  .tip{position:absolute;left:50%;bottom:150%;transform:translate(-50%,6px);white-space:nowrap;
+    background:rgba(12,13,16,.94);border:1px solid var(--line);border-radius:4px;padding:8px 12px;
+    font-size:12px;color:#eee;opacity:0;pointer-events:none;transition:.3s}
+  .hotspot:hover .tip,.hotspot.open .tip{opacity:1;transform:translate(-50%,0)}
+
+  /* rows */
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(20px,4vw,60px);align-items:center}
+  @media(max-width:820px){.split{grid-template-columns:1fr;gap:24px}.stats{grid-template-columns:1fr;gap:22px}}
+
+  /* perf bars */
+  .bars{margin-top:clamp(20px,4vh,36px);display:grid;gap:22px}
+  .barrow{display:grid;grid-template-columns:110px 1fr 76px;align-items:center;gap:14px;font-size:13px;color:#c9cbcf}
+  .track{height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+  .fill{height:100%;width:0;background:#fff;transition:width 1.5s cubic-bezier(.22,1,.36,1) .2s}
+  .fill.red{background:var(--red)}
+  .barrow b{font-weight:500;color:#fff;text-align:right;font-size:14px}
+
+  /* calculator */
+  .calc{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,54px);align-items:center;margin-top:clamp(18px,3vh,30px)}
+  @media(max-width:820px){.calc{grid-template-columns:1fr}}
+  input[type=range]{-webkit-appearance:none;width:100%;height:2px;background:rgba(255,255,255,.2);outline:none;margin:22px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#fff;cursor:pointer;box-shadow:0 0 0 6px rgba(255,255,255,.08)}
+  .num{font-size:clamp(30px,4.6vw,46px);font-weight:400;letter-spacing:-.02em}
+  .muted{color:var(--dim);font-size:12px;letter-spacing:.18em;margin-top:6px}
+
+  /* configurator */
+  .cfg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,54px);align-items:center}
+  @media(max-width:820px){.cfg{grid-template-columns:1fr}}
+  .opt{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 22px}
+  .chip{border:1px solid rgba(255,255,255,.22);background:transparent;color:#dcdde0;border-radius:4px;
+    padding:10px 14px;font:inherit;font-size:13px;cursor:pointer;transition:.25s}
+  .chip:hover{border-color:rgba(255,255,255,.5)}
+  .chip.on{background:#fff;color:#111;border-color:#fff}
+  .swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
+    outline:1px solid rgba(255,255,255,.18)}
+  .swatch.on{outline:2px solid #fff;outline-offset:2px}
+  .price{font-size:clamp(30px,5vw,52px);font-weight:400;letter-spacing:-.03em}
+  .price small{font-size:12px;letter-spacing:.2em;color:var(--dim);margin-right:8px}
+
+  .footerline{position:absolute;left:var(--pad);right:var(--pad);bottom:22px;display:flex;justify-content:space-between;
+    font-size:10px;letter-spacing:.3em;color:#4a4c52}
+  .spotlight{position:fixed;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:1;
+    background:radial-gradient(circle,rgba(255,255,255,.055),transparent 62%);transform:translate(-50%,-50%);
+    transition:opacity .4s;opacity:0}
+  @media(hover:hover){.spotlight{opacity:1}}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="spotlight" id="spot"></div>
+
+<nav class="topbar" id="bar">
+  <div class="logo">TESLA</div>
+  <div class="links">
+    <a data-go="2">数据</a><a data-go="4">空间</a><a data-go="6">成本</a><a data-go="7">配置</a>
+  </div>
+  <button class="btn small" data-go="8">订购</button>
+</nav>
+
+<main id="deck">
+
+  <section class="slide hero" id="s0">
+    <div class="bg" id="heroBg" style="background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Model-Y-2-Social-CN-v2.jpg')"></div>
+    <div class="inner">
+      <div class="rv" style="opacity:1;transform:none">
+        <h1>Model Y</h1>
+        <p class="sub">装得下生活，也装得下远方</p>
+        <div class="cta">
+          <button class="btn" data-go="7">立即定制</button>
+          <button class="btn ghost" data-go="8">预约试驾</button>
+        </div>
+      </div>
+    </div>
+    <div class="scrollcue">SCROLL<span></span></div>
+  </section>
+
+  <section class="slide" id="s1">
+    <p class="kicker rv">01 / 为什么是它</p>
+    <h2 class="rv d1">一台车，<br>解决你 90% 的出行。</h2>
+    <p class="lead rv d2">工作日通勤，周末带人去露营，过年塞满后备箱回老家。Model Y 不是跑车，是把这些事一次做完的那台车。</p>
+    <div class="footerline"><span>MODEL Y</span><span>02 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s2">
+    <p class="kicker rv">02 / 数字</p>
+    <h2 class="rv d1">安静的数字，<br>最能说明问题。</h2>
+    <div class="stats">
+      <div class="stat rv d2"><b><span data-count="719">0</span><small style="font-size:.35em"> km</small></b><span>CLTC 续航</span></div>
+      <div class="stat rv d3"><b><span data-count="4.3" data-dec="1">0</span><small style="font-size:.35em"> s</small></b><span>0-100 km/h</span></div>
+      <div class="stat rv d4"><b><span data-count="2138">0</span><small style="font-size:.35em"> L</small></b><span>最大装载空间</span></div>
+    </div>
+    <div class="footerline"><span>长续航全轮驱动版数据</span><span>03 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s3">
+    <p class="kicker rv">03 / 空间</p>
+    <h2 class="rv d1">后备箱，是一种底气。</h2>
+    <div class="split" style="margin-top:clamp(10px,2vh,24px)">
+      <div class="panel rv d2" style="aspect-ratio:16/10">
+        <img src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Model-Y-2-Social-CN-v2.jpg" alt="Model Y">
+        <div class="hotspot" style="left:26%;top:66%"><div class="tip">前备箱 117 L</div></div>
+        <div class="hotspot" style="left:66%;top:44%"><div class="tip">全景玻璃车顶</div></div>
+        <div class="hotspot" style="left:80%;top:66%"><div class="tip">后排放倒 2138 L</div></div>
+      </div>
+      <div class="rv d3">
+        <p class="lead" style="margin-top:0">日常 854 升，后排放倒两千一百多升。搬宿舍、装婴儿车、铺一张床看星星，都不用先量尺寸。</p>
+        <div class="bars">
+          <div class="barrow"><span>前备箱</span><div class="track"><div class="fill" data-w="6"></div></div><b>117 L</b></div>
+          <div class="barrow"><span>后备箱</span><div class="track"><div class="fill" data-w="40"></div></div><b>854 L</b></div>
+          <div class="barrow"><span>后排放倒</span><div class="track"><div class="fill red" data-w="100"></div></div><b>2138 L</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="footerline"><span>点击圆点查看</span><span>04 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s4">
+    <p class="kicker rv">04 / 性能</p>
+    <h2 class="rv d1">安静的野兽。</h2>
+    <div class="split">
+      <div class="rv d2">
+        <p class="lead" style="margin-top:0">没有换挡，没有转速，动力随叫随到。四驱版 4.3 秒破百，超车只需要一个念头。</p>
+        <div class="bars">
+          <div class="barrow"><span>0-100 km/h</span><div class="track"><div class="fill red" data-w="86"></div></div><b>4.3 s</b></div>
+          <div class="barrow"><span>最高车速</span><div class="track"><div class="fill" data-w="62"></div></div><b>201 km/h</b></div>
+          <div class="barrow"><span>风阻系数</span><div class="track"><div class="fill" data-w="46"></div></div><b>0.22 Cd</b></div>
+        </div>
+      </div>
+      <div class="panel rv d3" style="aspect-ratio:4/3">
+        <img src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Model-Y-2-Social-CN-v2.jpg" alt="Model Y 侧影" style="filter:contrast(1.08) brightness(.92)">
+      </div>
+    </div>
+    <div class="footerline"><span>长续航全轮驱动版</span><span>05 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s5">
+    <p class="kicker rv">05 / 安全</p>
+    <h2 class="rv d1">安全，不该是选装件。</h2>
+    <div class="stats">
+      <div class="stat rv d2"><b>8</b><span>摄像头 · 360° 感知</span></div>
+      <div class="stat rv d3"><b>AEB</b><span>自动紧急制动</span></div>
+      <div class="stat rv d4"><b>全系</b><span>主动安全标配</span></div>
+    </div>
+    <p class="lead rv d5" style="margin-top:clamp(24px,4vh,40px)">入门版和高配版，用的是同一套安全。因为你没法选择哪天出事。</p>
+    <div class="footerline"><span>MODEL Y</span><span>06 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s6">
+    <p class="kicker rv">06 / 用车成本</p>
+    <h2 class="rv d1">一年能省出一台<br>顶配手机。</h2>
+    <div class="calc">
+      <div class="rv d2">
+        <div class="muted">每月行驶里程</div>
+        <div class="num"><span id="kmOut">1500</span> km</div>
+        <input type="range" id="km" min="500" max="4000" step="100" value="1500">
+        <div class="muted">拖动查看对比</div>
+      </div>
+      <div class="rv d3">
+        <div class="barrow" style="grid-template-columns:84px 1fr 96px"><span>燃油 SUV</span><div class="track"><div class="fill red" id="fuelBar" data-w="100"></div></div><b id="fuelOut">11,700</b></div>
+        <div class="barrow" style="grid-template-columns:84px 1fr 96px;margin-top:18px"><span>Model Y</span><div class="track"><div class="fill" id="evBar" data-w="18"></div></div><b id="evOut">2,160</b></div>
+        <div style="border-top:1px solid var(--line);margin-top:26px;padding-top:20px">
+          <div class="muted">每年节省</div>
+          <div class="price" style="font-size:clamp(26px,4vw,40px)">¥ <span id="save">9,540</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footerline"><span>按油费 0.65 元/km、家充 0.12 元/km 估算</span><span>07 / 09</span></div>
+  </section>
+
+  <section class="slide" id="s7">
+    <p class="kicker rv">07 / 配置</p>
+    <h2 class="rv d1">选一台属于你的。</h2>
+    <div class="cfg">
+      <div class="rv d2">
+        <div class="muted">版本</div>
+        <div class="opt">
+          <button class="chip on" data-trim="263500" data-name="后轮驱动版">后轮驱动版</button>
+          <button class="chip" data-trim="303500" data-name="长续航全轮驱动版">长续航全轮驱动版</button>
+        </div>
+        <div class="muted">车漆</div>
+        <div class="opt">
+          <button class="swatch on" style="background:#e9e9e6" data-add="0"></button>
+          <button class="swatch" style="background:#5c5e62" data-add="8000"></button>
+          <button class="swatch" style="background:#1d3a5f" data-add="8000"></button>
+          <button class="swatch" style="background:#8c1d24" data-add="12000"></button>
+        </div>
+        <div class="muted">轮毂</div>
+        <div class="opt">
+          <button class="chip on" data-add2="0">19 英寸</button>
+          <button class="chip" data-add2="8000">20 英寸</button>
+        </div>
+      </div>
+      <div class="rv d3" style="text-align:right">
+        <div class="muted" id="cfgName">后轮驱动版</div>
+        <div class="price"><small>¥</small><span id="total">263,500</span></div>
+        <div class="muted" style="margin-top:14px">预估落地价，不含保险与上牌</div>
+        <button class="btn blue" style="margin-top:26px">立即订购</button>
+      </div>
+    </div>
+    <div class="footerline"><span>价格为参考价，以官网当日报价为准</span><span>08 / 09</span></div>
+  </section>
+
+  <section class="slide hero" id="s8" style="justify-content:center;text-align:left;align-items:flex-start">
+    <div class="bg" style="background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Model-Y-2-Social-CN-v2.jpg');filter:brightness(.42)"></div>
+    <div class="inner" style="padding-bottom:0">
+      <h2 class="rv" style="font-size:clamp(34px,6vw,64px)">现在，去开一台<br>属于你的 Model Y。</h2>
+      <p class="lead rv d1">预约试驾不花钱。先去看一眼，再决定也不迟。</p>
+      <div class="cta rv d2" style="justify-content:flex-start">
+        <button class="btn">预约试驾</button>
+        <button class="btn ghost" data-go="0">返回首页</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="dots" id="dots"></div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var dots = document.getElementById('dots');
+  var prog = document.getElementById('prog');
+  var bar = document.getElementById('bar');
+  var current = 0;
+
+  slides.forEach(function(s,i){
+    var b = document.createElement('button');
+    if(i===0) b.className='on';
+    b.addEventListener('click', function(){ go(i); });
+    dots.appendChild(b);
+  });
+
+  function go(i){
+    i = Math.max(0, Math.min(slides.length-1, i));
+    slides[i].scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  document.querySelectorAll('[data-go]').forEach(function(el){
+    el.addEventListener('click', function(){ go(parseInt(el.getAttribute('data-go'),10)); });
+  });
+
+  function setActive(i){
+    if(i===current) return;
+    current = i;
+    Array.prototype.forEach.call(dots.children, function(d,k){
+      d.className = (k===i) ? 'on' : '';
+    });
+    bar.className = 'topbar' + (i>0 ? ' solid' : '');
+  }
+
+  function onScroll(){
+    var max = deck.scrollHeight - deck.clientHeight;
+    prog.style.width = (max>0 ? (deck.scrollTop/max*100) : 0) + '%';
+    var i = Math.round(deck.scrollTop / deck.clientHeight);
+    setActive(Math.max(0, Math.min(slides.length-1, i)));
+  }
+  deck.addEventListener('scroll', onScroll, {passive:true});
+
+  // keyboard
+  window.addEventListener('keydown', function(e){
+    if(['ArrowDown','PageDown',' '].indexOf(e.key)>-1){ e.preventDefault(); go(current+1); }
+    if(['ArrowUp','PageUp'].indexOf(e.key)>-1){ e.preventDefault(); go(current-1); }
+  });
+
+  // reveal on view
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      en.target.classList.add('in');
+      // bars
+      en.target.querySelectorAll('.fill').forEach(function(f){
+        f.style.width = f.getAttribute('data-w') + '%';
+      });
+      // counters
+      en.target.querySelectorAll('[data-count]').forEach(function(el){
+        if(el.dataset.done) return;
+        el.dataset.done = '1';
+        var target = parseFloat(el.getAttribute('data-count'));
+        var dec = parseInt(el.getAttribute('data-dec')||'0',10);
+        var t0 = performance.now(), dur = 1500;
+        function tick(t){
+          var p = Math.min(1,(t-t0)/dur);
+          var e = 1 - Math.pow(1-p,3);
+          var v = target*e;
+          el.textContent = dec ? v.toFixed(dec) : Math.round(v).toLocaleString('en-US');
+          if(p<1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    });
+  }, {threshold:0.35});
+  slides.forEach(function(s){ io.observe(s); });
+
+  // hero parallax
+  var heroBg = document.getElementById('heroBg');
+  deck.addEventListener('scroll', function(){
+    var y = deck.scrollTop;
+    if(y < window.innerHeight){
+      heroBg.style.transform = 'translateY(' + (y*0.35) + 'px) scale(1.04)';
+    }
+  }, {passive:true});
+
+  // hotspots
+  document.querySelectorAll('.hotspot').forEach(function(h){
+    h.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open = h.classList.contains('open');
+      document.querySelectorAll('.hotspot.open').forEach(function(o){o.classList.remove('open');});
+      if(!open) h.classList.add('open');
+    });
+  });
+
+  // cost calculator
+  var km = document.getElementById('km');
+  function money(n){ return n.toLocaleString('en-US'); }
+  function calc(){
+    var m = parseInt(km.value,10);
+    var yearKm = m*12;
+    var fuel = Math.round(yearKm*0.65);
+    var ev = Math.round(yearKm*0.12);
+    document.getElementById('kmOut').textContent = money(m);
+    document.getElementById('fuelOut').textContent = money(fuel);
+    document.getElementById('evOut').textContent = money(ev);
+    document.getElementById('save').textContent = money(Math.max(0,fuel-ev));
+    var fb = document.getElementById('fuelBar'), eb = document.getElementById('evBar');
+    fb.style.width = '100%';
+    eb.style.width = Math.max(4, Math.round(ev/fuel*100)) + '%';
+  }
+  if(km){ km.addEventListener('input', calc); calc(); }
+
+  // configurator
+  var base = 263500, name = '后轮驱动版', cAdd = 0, wAdd = 0;
+  function render(){
+    var t = base + cAdd + wAdd;
+    document.getElementById('total').textContent = t.toLocaleString('en-US');
+    document.getElementById('cfgName').textContent = name;
+  }
+  document.querySelectorAll('[data-trim]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('[data-trim]').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      base = parseInt(b.getAttribute('data-trim'),10);
+      name = b.getAttribute('data-name');
+      render();
+    });
+  });
+  document.querySelectorAll('.swatch').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.swatch').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      cAdd = parseInt(b.getAttribute('data-add'),10);
+      render();
+    });
+  });
+  var wheels = document.querySelectorAll('[data-add2]');
+  wheels.forEach(function(b){
+    b.addEventListener('click', function(){
+      wheels.forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      wAdd = parseInt(b.getAttribute('data-add2'),10);
+      render();
+    });
+  });
+  render();
+
+  // cursor spotlight
+  var spot = document.getElementById('spot');
+  window.addEventListener('mousemove', function(e){
+    spot.style.left = e.clientX + 'px';
+    spot.style.top = e.clientY + 'px';
+  });
+
+  onScroll();
+})();
+</script>
+</body>
+</html>
